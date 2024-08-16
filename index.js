@@ -6,7 +6,9 @@ const port = process.env.PORT || 5000;
 require('dotenv').config();
 
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+    origin: ['http://localhost:5173', 'https://urban-shop-92f50.web.app', 'https://urban-shop-92f50.firebaseapp.com']
+}))
 
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -24,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const productsCollection = client.db('UrbanShop').collection('Products')
 
