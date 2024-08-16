@@ -37,8 +37,9 @@ async function run() {
         })
 
         app.get('/products', async (req, res) => {
-            const { searchProduct, brand, category, priceRange } = req.query
+            const { searchProduct, brand, category, priceRange, sortBy } = req.query
             let query = {}
+            let sort = {};
 
             if (searchProduct) {
                 query = { title: { $regex: searchProduct, $options: 'i' } };
@@ -82,8 +83,17 @@ async function run() {
                 query = { brand: brand, category: category, price: { $gte: lessPrice, $lte: overPrice } }
             }
 
+
+            if (sortBy === 'priceAsc') {
+                sort.price = 1;
+            } else if (sortBy === 'priceDesc') {
+                sort.price = -1;
+            } else if (sortBy === 'dateDesc') {
+                sort.createdAt = -1;
+            }
+
             try {
-                const result = await productsCollection.find(query).toArray();
+                const result = await productsCollection.find(query).sort(sort).toArray();
                 res.send(result);
             } catch (error) {
                 res.status(500).send({ message: "Failed to retrieve products", error });
