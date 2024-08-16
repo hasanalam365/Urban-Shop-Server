@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express()
-
+const jwt = require('jsonwebtoken')
 const cors = require('cors')
 const port = process.env.PORT || 5000;
 require('dotenv').config();
@@ -31,12 +31,36 @@ async function run() {
         const productsCollection = client.db('UrbanShop').collection('Products')
 
 
+        //jwt
+        app.post('/jwt', async (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.TOKEN_ACCESS, { expiresIn: '3h' })
+            res.send({ token })
+        })
+
+        const verifyToken = (req, res, next) => {
+            // console.log(req.headers.authorization)
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+
+            const token = req.headers.authorization.split(' ')[1]
+
+            jwt.verify(token, process.env.TOKEN_ACCESS, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'unauthorized access' })
+                }
+                req.decoded = decoded
+                next()
+            })
+        }
+
         app.get('/productsCatBrand', async (req, res) => {
             const result = await productsCollection.find().toArray()
             res.send(result)
         })
 
-        app.get('/products', async (req, res) => {
+        app.get('/products', verifyToken, async (req, res) => {
             const { searchProduct, brand, category, priceRange, sortBy } = req.query
             let query = {}
             let sort = {};
@@ -99,6 +123,10 @@ async function run() {
                 res.status(500).send({ message: "Failed to retrieve products", error });
             }
         })
+
+
+
+
 
         // Send a ping to confirm a successful connection
         // await client.db("admin").command({ ping: 1 });
