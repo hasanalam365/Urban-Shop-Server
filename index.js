@@ -31,17 +31,63 @@ async function run() {
         const productsCollection = client.db('UrbanShop').collection('Products')
 
 
+        app.get('/productsCatBrand', async (req, res) => {
+            const result = await productsCollection.find().toArray()
+            res.send(result)
+        })
+
         app.get('/products', async (req, res) => {
-            const { searchProduct } = req.query
+            const { searchProduct, brand, category, priceRange } = req.query
             let query = {}
 
             if (searchProduct) {
                 query = { title: { $regex: searchProduct, $options: 'i' } };
+
             }
 
-            const result = await productsCollection.find(query).toArray()
+            if (brand) {
+                query = { brand: brand }
+            }
 
-            res.send(result)
+            if (category) {
+                query = { category: category }
+            }
+            if (priceRange) {
+                const lessPrice = parseInt(priceRange.split('-')[0])
+                const overPrice = parseInt(priceRange.split('-')[1])
+                query.price = { $gte: lessPrice, $lte: overPrice };
+
+            }
+
+            if (brand && category) {
+                query = { brand: brand, category: category }
+            }
+            if (brand && priceRange) {
+                const lessPrice = parseInt(priceRange.split('-')[0])
+                const overPrice = parseInt(priceRange.split('-')[1])
+                query = { brand: brand, price: { $gte: lessPrice, $lte: overPrice } }
+            }
+            if (category && priceRange) {
+                const lessPrice = parseInt(priceRange.split('-')[0])
+                const overPrice = parseInt(priceRange.split('-')[1])
+                query = { category: category, price: { $gte: lessPrice, $lte: overPrice } }
+            }
+
+
+            if (brand && category && priceRange) {
+                const lessPrice = parseInt(priceRange.split('-')[0])
+                const overPrice = parseInt(priceRange.split('-')[1])
+                query.price = { $gte: lessPrice, $lte: overPrice };
+
+                query = { brand: brand, category: category, price: { $gte: lessPrice, $lte: overPrice } }
+            }
+
+            try {
+                const result = await productsCollection.find(query).toArray();
+                res.send(result);
+            } catch (error) {
+                res.status(500).send({ message: "Failed to retrieve products", error });
+            }
         })
 
         // Send a ping to confirm a successful connection
