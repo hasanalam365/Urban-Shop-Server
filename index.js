@@ -30,7 +30,14 @@ async function run() {
 
 
         app.get('/products', async (req, res) => {
-            const result = await productsCollection.find().toArray()
+            const { searchProduct } = req.query
+            let query = {}
+
+            if (searchProduct) {
+                query = { title: { $regex: searchProduct, $options: 'i' } };
+            }
+
+            const result = await productsCollection.find(query).toArray()
 
             res.send(result)
         })
