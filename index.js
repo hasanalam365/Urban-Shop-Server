@@ -62,6 +62,10 @@ async function run() {
 
         app.get('/products', verifyToken, async (req, res) => {
             const { searchProduct, brand, category, priceRange, sortBy } = req.query
+
+            const page = parseInt(req.query.currentPage)
+            const size = parseInt(req.query.itemsPerPage)
+
             let query = {}
             let sort = {};
 
@@ -115,16 +119,25 @@ async function run() {
             } else if (sortBy === 'dateDesc') {
                 sort.createdAt = -1;
             }
-
+            console.log(size)
             try {
-                const result = await productsCollection.find(query).sort(sort).toArray();
+                const result = await productsCollection.find(query).sort(sort)
+                    .skip(page * size)
+                    .limit(size)
+                    .toArray();
+                const all = result.length
+                console.log(all)
                 res.send(result);
             } catch (error) {
                 res.status(500).send({ message: "Failed to retrieve products", error });
             }
         })
 
+        app.get('/totalCount', async (req, res) => {
+            const result = await productsCollection.countDocuments()
 
+            res.send({ count: result })
+        })
 
 
 
