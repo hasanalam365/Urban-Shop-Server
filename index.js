@@ -63,8 +63,8 @@ async function run() {
         app.get('/products', verifyToken, async (req, res) => {
             const { searchProduct, brand, category, priceRange, sortBy } = req.query
 
-            const page = parseInt(req.query.currentPage)
-            const size = parseInt(req.query.itemsPerPage)
+            const page = parseInt(req.query.currentPage) || 1;
+            const size = parseInt(req.query.itemsPerPage) || 8;
 
             let query = {}
             let sort = {};
@@ -122,20 +122,17 @@ async function run() {
 
             try {
                 const result = await productsCollection.find(query).sort(sort)
-                    .skip(page * size)
+                    .skip((page - 1) * size)
                     .limit(size)
                     .toArray();
-                res.send(result);
+                const totalItems = await productsCollection.countDocuments(query)
+                res.send({ products: result, totalItems });
             } catch (error) {
                 res.status(500).send({ message: "Failed to retrieve products", error });
             }
         })
 
-        app.get('/totalCount', async (req, res) => {
-            const result = await productsCollection.countDocuments()
 
-            res.send({ count: result })
-        })
 
 
 
