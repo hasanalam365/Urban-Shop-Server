@@ -119,14 +119,12 @@ async function run() {
             } else if (sortBy === 'dateDesc') {
                 sort.createdAt = -1;
             }
-            console.log(size)
+
             try {
                 const result = await productsCollection.find(query).sort(sort)
                     .skip(page * size)
                     .limit(size)
                     .toArray();
-                const all = result.length
-                console.log(all)
                 res.send(result);
             } catch (error) {
                 res.status(500).send({ message: "Failed to retrieve products", error });
